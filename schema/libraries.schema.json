@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "libraries": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^github:[\\w.-]+\\/[\\w.-]+$"
+      },
+      "description": "GitHub repositories to search for plugins, as `github:<owner>/<repo>`."
+    }
+  },
+  "required": [
+    "libraries"
+  ],
+  "additionalProperties": false
+}

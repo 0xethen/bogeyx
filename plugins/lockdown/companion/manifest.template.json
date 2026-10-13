@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Bogey lockdown companion",
+  "version": "1.0.0",
+  "description": "Tells a Bogey event it is open in this browser, and reports leaving the window, new windows, developer tools and the clipboard. A deterrent and a record.",
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["__MATCHES__"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}

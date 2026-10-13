@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "name": "First-party plugins for Bogey",
+  "repository": "github:0xethen/bogeyx",
+  "plugins": [
+    {
+      "key": "extra-judging",
+      "name": "Extra Judging",
+      "version": "1.0.0",
+      "description": "Extra ways to rank a round than the rubric: pairwise comparison, peer rating by participants, ranked ballots and a points budget. Fun!",
+      "api": 1,
+      "tag": "extra-judging-v1.0.0",
+      "directory": "plugins/extra-judging",
+      "author": "Ethen Tseggai",
+      "license": "MIT"
+    },
+    {
+      "key": "github",
+      "name": "GitHub",
+      "version": "1.0.0",
+      "description": "Fill a submission from a repository's README, and publish your projects to a section of your GitHub profile README.",
+      "api": 1,
+      "tag": "github-v1.0.0",
+      "directory": "plugins/github",
+      "author": "Ethen Tseggai",
+      "license": "MIT"
+    },
+    {
+      "key": "i18n",
+      "name": "Languages",
+      "version": "1.0.0",
+      "description": "Shows Bogey in other languages: Spanish to start, and a pattern for adding more.",
+      "api": 1,
+      "tag": "i18n-v1.0.0",
+      "directory": "plugins/i18n",
+      "author": "Ethen Tseggai",
+      "license": "MIT"
+    },
+    {
+      "key": "leaderboard",
+      "name": "Leaderboard",
+      "version": "1.0.0",
+      "description": "Scored prediction files like Kaggle. Teams upload a CSV, Bogey scores it against hidden answers, and a leaderboard ranks the best.",
+      "api": 1,
+      "tag": "leaderboard-v1.0.0",
+      "directory": "plugins/leaderboard",
+      "author": "Ethen Tseggai",
+      "license": "MIT"
+    },
+    {
+      "key": "lockdown",
+      "name": "Lockdown",
+      "version": "1.0.0",
+      "description": "Asks for full screen and records tab switches while its window is open.",
+      "api": 1,
+      "tag": "lockdown-v1.0.0",
+      "directory": "plugins/lockdown",
+      "author": "Ethen Tseggai",
+      "license": "MIT"
+    },
+    {
+      "key": "sounds",
+      "name": "Sounds",
+      "version": "1.0.0",
+      "description": "Your own uploaded sounds for what happens in an event (announcements, messages, solved problems), music timed to the schedule, like a song that ends exactly when hacking does, and background music.",
+      "api": 1,
+      "tag": "sounds-v1.0.0",
+      "directory": "plugins/sounds",
+      "author": "Ethen Tseggai",
+      "license": "MIT"
+    }
+  ]
+}

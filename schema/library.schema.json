@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "number",
+      "const": 1,
+      "description": "The index format version."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "What the library is called."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^github:[\\w.-]+\\/[\\w.-]+$",
+      "description": "Where its plugins are released, `github:<owner>/<repo>`."
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,30}[a-z0-9]$",
+            "description": "The plugin's key, the folder name."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)*$",
+            "description": "The latest released version."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "api": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Bogey plugin API it is written for."
+          },
+          "tag": {
+            "type": "string",
+            "description": "The release tag, `<key>-v<version>`."
+          },
+          "directory": {
+            "type": "string",
+            "pattern": "^(?!(.*\\/)?\\.\\.?(\\/|$))[a-z0-9._-]+(\\/[a-z0-9._-]+)*$",
+            "description": "Where the plugin is in the repository, such as `plugins/discord`."
+          },
+          "author": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "license": {
+            "type": "string",
+            "maxLength": 60
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "version",
+          "description",
+          "api",
+          "tag",
+          "directory"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "name",
+    "repository",
+    "plugins"
+  ],
+  "additionalProperties": false
+}

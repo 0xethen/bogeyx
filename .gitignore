@@ -1,0 +1,7 @@
+node_modules
+.DS_Store
+
+# made by bogey plugins link(? now)
+/tsconfig.json
+
+lockdown/companion/dist
