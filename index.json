@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "name": "First-party plugins for Bogey",
+  "name": "Bogey first-party plugins",
   "repository": "github:0xethen/bogeyx",
   "plugins": [
     {
@@ -62,7 +62,7 @@
       "key": "sounds",
       "name": "Sounds",
       "version": "1.0.0",
-      "description": "Your own uploaded sounds for what happens in an event (announcements, messages, solved problems), music timed to the schedule, like a song that ends exactly when hacking does, and background music.",
+      "description": "Your own sounds, uploaded or linked, for what happens in an event (announcements, messages, solved problems), music timed to the schedule, like a song that ends exactly when hacking does, and background music.",
       "api": 1,
       "tag": "sounds-v1.0.0",
       "directory": "plugins/sounds",
