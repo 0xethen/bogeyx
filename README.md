@@ -31,7 +31,7 @@ package's dependencies (and `@bogey/plugins` itself), so a plugin's imports (`@b
 Bogey does; an existing one is left alone, so delete it and link again to regenerate:
 
 ```sh
-cd monorepo && bogey plugins link ../extensions
+cd monorepo && bogey plugins link ../plugins
 ```
 
 A folder in `plugins/` is picked up the next time Bogey builds or its dev server restarts. Folders

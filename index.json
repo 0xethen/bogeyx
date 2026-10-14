@@ -4,6 +4,17 @@
   "repository": "github:0xethen/bogeyx",
   "plugins": [
     {
+      "key": "captcha",
+      "name": "Captcha",
+      "version": "1.0.0",
+      "description": "Puts a Cloudflare Turnstile or hCaptcha check on the sign-in forms, which Supabase Auth verifies before it sends a link or signs anyone in.",
+      "api": 1,
+      "tag": "captcha-v1.0.0",
+      "directory": "plugins/captcha",
+      "author": "Ethen Tseggai",
+      "license": "MIT"
+    },
+    {
       "key": "extra-judging",
       "name": "Extra Judging",
       "version": "1.0.0",
