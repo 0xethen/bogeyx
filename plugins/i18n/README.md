@@ -4,6 +4,8 @@ Shows Bogey in other languages. Bogey itself ships English; this plugin brings t
 Spanish (`es`) is the first. A person picks theirs under Account → Preferences → Language (it appears once a plugin brings a
 second language); otherwise Bogey uses what their browser asks for, and English where it has no match.
 
+> Translated by AI!!! Pretty much just for housekeeping at this point. If Bogey ever becomes popular I would love to have more languages (and more accurate/complete translations)
+
 ## When a message isn't translated
 
 Under Instance → Extensions, **When a message isn't translated** (locked at the instance: organizations and events see the choice but can't change it) chooses what people see where their
