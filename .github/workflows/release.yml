@@ -24,7 +24,7 @@ jobs:
         run: |
           archive=$(node scripts/release.ts "$GITHUB_REF_NAME")
           echo "archive=$archive" >> "$GITHUB_OUTPUT"
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: ${{ steps.pack.outputs.archive }}
       # with immutable releases on (a repository setting), assets go on while it's a draft and the
