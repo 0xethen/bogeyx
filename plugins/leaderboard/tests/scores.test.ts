@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vite-plus/test";
 import { fileProblem, formatScore, lowerIsBetter } from "../scores.ts";
 
 test("error metrics are lower-is-better, the others higher", () => {

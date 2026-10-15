@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vite-plus/test";
 import { en } from "@bogey/config/messages";
 import { checkCatalog, untranslated } from "../check.ts";
 import es from "../es.json" with { type: "json" };

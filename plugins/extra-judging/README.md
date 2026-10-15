@@ -4,12 +4,12 @@ More ways to rank a judged round than Bogey's rubric. Turn the extension on for 
 pick a round's method in Manage → Judging. Each method is a ranking provider: results, advancing the top N, awards and
 exports use its scores like any other round.
 
-| Method                | Who judges   | What they do                                       | The score                                |
-| --------------------- | ------------ | -------------------------------------------------- | ---------------------------------------- |
-| Pairwise comparison   | Judges       | Pick the better of this project and the next one   | Bradley-Terry fit of every pick          |
-| Peer rating           | Participants | Rate other teams' projects on your criteria        | Average rating, as a percent             |
-| Ranked ballots        | Judges       | Put the projects they saw in order                 | Borda count of every ballot, as a percent |
-| Points budget         | Judges       | Spread a fixed budget of points over projects      | Points received                          |
+| Method              | Who judges   | What they do                                     | The score                                 |
+| ------------------- | ------------ | ------------------------------------------------ | ----------------------------------------- |
+| Pairwise comparison | Judges       | Pick the better of this project and the next one | Bradley-Terry fit of every pick           |
+| Peer rating         | Participants | Rate other teams' projects on your criteria      | Average rating, as a percent              |
+| Ranked ballots      | Judges       | Put the projects they saw in order               | Borda count of every ballot, as a percent |
+| Points budget       | Judges       | Spread a fixed budget of points over projects    | Points received                           |
 
 Every method respects judge conflicts (Manage → Judging) and the round's window. **Extra judging** in Manage's sidebar
 shows how each method is going.

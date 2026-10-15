@@ -12,7 +12,10 @@ function useEngineState() {
   return useSyncExternalStore(engine.subscribe, engine.getState, engine.getState);
 }
 
-const GENERATED_NAMES = { lofi: "Generated lo-fi beats", ambient: "Generated ambient pads" } as const;
+const GENERATED_NAMES = {
+  lofi: "Generated lo-fi beats",
+  ambient: "Generated ambient pads",
+} as const;
 
 function backgroundName(
   background: Background,

@@ -51,7 +51,6 @@ import { isComplete, move, parseCriteria, pointsLeft } from "./sheet.ts";
 type Settings = SettingsOf<typeof manifest>;
 type PanelProps = PluginJudgingPanelContext<Settings>;
 
-
 const { useT } = createPluginMessages(manifest, en);
 type T = ReturnType<typeof useT>;
 
@@ -62,7 +61,9 @@ function messageOf(error: unknown, t: T): string | null {
 }
 
 function entryName(t: T, entry: { title: string; table_label: string | null }): string {
-  return entry.table_label ? t("table.label", { label: entry.table_label, title: entry.title }) : entry.title;
+  return entry.table_label
+    ? t("table.label", { label: entry.table_label, title: entry.title })
+    : entry.title;
 }
 
 /** Refreshes everything the plugin shows after a write. */
@@ -104,7 +105,9 @@ function PairwisePanel({ submissionId }: PanelProps) {
       {entry === null && <p className="text-sm text-muted-fg">{t("pairwise.done")}</p>}
       {entry && (
         <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium">{t("pairwise.next", { title: entryName(t, entry) })}</p>
+          <p className="text-sm font-medium">
+            {t("pairwise.next", { title: entryName(t, entry) })}
+          </p>
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={choose.isPending}
@@ -191,7 +194,9 @@ function BallotEditor({
     <Panel
       title={t("ranked.title")}
       description={t("ranked.help")}
-      action={<Badge variant="outline">{saved && !dirty ? t("ranked.saved") : t("ranked.unsaved")}</Badge>}
+      action={
+        <Badge variant="outline">{saved && !dirty ? t("ranked.saved") : t("ranked.unsaved")}</Badge>
+      }
     >
       {rows.length === 0 && <p className="text-sm text-muted-fg">{t("ranked.empty")}</p>}
       <ol className="flex flex-col gap-1">
@@ -285,7 +290,9 @@ function BudgetEditor({
     onSuccess: refresh,
   });
   useUnsavedEntry({ dirty: points !== saved, reset: () => setPoints(saved) });
-  const elsewhere = rows.filter((row) => row.submission_id !== submissionId && (row.points ?? 0) > 0);
+  const elsewhere = rows.filter(
+    (row) => row.submission_id !== submissionId && (row.points ?? 0) > 0,
+  );
 
   return (
     <Panel
@@ -315,7 +322,10 @@ function BudgetEditor({
       {left < 0 && <p className="text-sm text-destructive">{t("budget.over", { over: -left })}</p>}
       <ErrorAlert error={messageOf(save.error, t)} />
       <div>
-        <Button disabled={save.isPending || left < 0 || points === saved} onClick={() => save.mutate()}>
+        <Button
+          disabled={save.isPending || left < 0 || points === saved}
+          onClick={() => save.mutate()}
+        >
           {t("budget.save")}
         </Button>
       </div>
@@ -342,7 +352,9 @@ function BudgetEditor({
 function PeerPanel(_context: PanelProps) {
   const t = useT();
   return (
-    <p className="rounded-2xl border border-border p-4 text-sm text-muted-fg">{t("peer.noJudging")}</p>
+    <p className="rounded-2xl border border-border p-4 text-sm text-muted-fg">
+      {t("peer.noJudging")}
+    </p>
   );
 }
 
@@ -563,7 +575,9 @@ function ManagePage({ eventId, settings }: PluginContext<Settings>) {
                 <TableRow key={`${row.round_id}:${row.judge_id}`}>
                   <TableCell>{row.round_name}</TableCell>
                   <TableCell>
-                    {row.method === "extra-judging.budget" ? t("method.budget") : t("method.ranked")}
+                    {row.method === "extra-judging.budget"
+                      ? t("method.budget")
+                      : t("method.ranked")}
                   </TableCell>
                   <TableCell>{row.judge_name}</TableCell>
                   <TableCell className="text-right">{row.entries}</TableCell>

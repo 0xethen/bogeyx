@@ -1,0 +1,6 @@
+# a pushed <plugin>-v<version> tag must match that plugin's manifest
+while read -r local_ref _ _ _; do
+  case "$local_ref" in
+    refs/tags/*-v*) node scripts/release.ts --check "${local_ref#refs/tags/}" || exit 1 ;;
+  esac
+done

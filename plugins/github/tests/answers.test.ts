@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vite-plus/test";
 import { answersOf, fit } from "../answers.ts";
 
 test("answers keep text and yes/no, and drop the rest", () => {

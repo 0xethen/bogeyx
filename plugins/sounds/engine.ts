@@ -385,7 +385,9 @@ class Engine {
     this.underTimer = setInterval(() => {
       const step = (1 - UNDER) / (UNDER_FADE_MS / UNDER_TICK_MS);
       this.under =
-        target < this.under ? Math.max(target, this.under - step) : Math.min(target, this.under + step);
+        target < this.under
+          ? Math.max(target, this.under - step)
+          : Math.min(target, this.under + step);
       this.applyLevels();
       if (this.under === target && this.underTimer) {
         clearInterval(this.underTimer);

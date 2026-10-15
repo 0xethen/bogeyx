@@ -47,7 +47,7 @@ Any `Content-Security-Policy` in front of Bogey must allow the provider: `script
 
 Both are locked to the instance, since Supabase Auth has one captcha configuration for the whole instance.
 
-| Setting  | What it does                                                         |
-| -------- | -------------------------------------------------------------------- |
-| Provider | Cloudflare Turnstile or hCaptcha. Must match Supabase's.             |
-| Site key | The widget's public key. Until it's set, the plugin shows nothing.   |
+| Setting  | What it does                                                       |
+| -------- | ------------------------------------------------------------------ |
+| Provider | Cloudflare Turnstile or hCaptcha. Must match Supabase's.           |
+| Site key | The widget's public key. Until it's set, the plugin shows nothing. |

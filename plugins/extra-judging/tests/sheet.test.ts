@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vite-plus/test";
 import { bordaShare, isComplete, move, parseCriteria, pointsLeft } from "../sheet.ts";
 
 test("criteria are one per non-empty line, trimmed", () => {

@@ -21,7 +21,8 @@ export const en = {
   "ranked.save": "Save ranking",
   "ranked.saving": "Saving...",
   "budget.title": "Your points",
-  "budget.help": "Spread {budget} points over the projects you would back. Give this one 0 to skip it.",
+  "budget.help":
+    "Spread {budget} points over the projects you would back. Give this one 0 to skip it.",
   "budget.left": "{left} of {budget} left",
   "budget.over": "That is {over} more than you have left.",
   "budget.points": "Points for this project",

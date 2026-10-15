@@ -23,13 +23,13 @@ The item on the submission shows the best public score.
 
 ## Metrics
 
-| Metric   | Predictions are         | Better  |
-| -------- | ----------------------- | ------- |
-| accuracy | a label                 | higher  |
-| macro_f1 | a label (mean over classes in the split) | higher  |
-| rmse     | a number                | lower   |
-| mae      | a number                | lower   |
-| log_loss | probability of class 1; answers are 0 or 1 | lower |
+| Metric   | Predictions are                            | Better |
+| -------- | ------------------------------------------ | ------ |
+| accuracy | a label                                    | higher |
+| macro_f1 | a label (mean over classes in the split)   | higher |
+| rmse     | a number                                   | lower  |
+| mae      | a number                                   | lower  |
+| log_loss | probability of class 1; answers are 0 or 1 | lower  |
 
 Fields can be quoted (`"a, b"`, `""` for a quote). Files are limited to 5 MB and 200,000 rows.
 

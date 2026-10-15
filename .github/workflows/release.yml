@@ -14,25 +14,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - name: check the tag against the manifest
-        id: tag
-        run: |
-          plugin="${GITHUB_REF_NAME%-v*}"
-          version="${GITHUB_REF_NAME##*-v}"
-          test -f "plugins/$plugin/manifest.ts" || { echo "no plugin named $plugin"; exit 1; }
-          grep -q "^  version: \"$version\"" "plugins/$plugin/manifest.ts" || { echo "plugins/$plugin/manifest.ts doesn't say version $version"; exit 1; }
-          echo "plugin=$plugin" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: voidzero-dev/setup-vp@v1.21.2
+        with:
+          node-version: "24"
+          run-install: false
+      # checks the tag against the manifest and writes dist/<plugin>-<version>.tar.gz
       - name: pack it
-        run: tar -czf "${{ steps.tag.outputs.plugin }}-${{ steps.tag.outputs.version }}.tar.gz" -C plugins "${{ steps.tag.outputs.plugin }}"
+        id: pack
+        run: |
+          archive=$(node scripts/release.ts "$GITHUB_REF_NAME")
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
       - uses: actions/attest-build-provenance@v2
         with:
-          subject-path: ${{ steps.tag.outputs.plugin }}-${{ steps.tag.outputs.version }}.tar.gz
+          subject-path: ${{ steps.pack.outputs.archive }}
       # with immutable releases on (a repository setting), assets go on while it's a draft and the
       # release is then published; GitHub signs a release attestation `bogey plugins add` checks
       - name: publish
         env:
           GH_TOKEN: ${{ github.token }}
+          ARCHIVE: ${{ steps.pack.outputs.archive }}
         run: |
-          gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --generate-notes "${{ steps.tag.outputs.plugin }}-${{ steps.tag.outputs.version }}.tar.gz"
+          gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --generate-notes "$ARCHIVE"
           gh release edit "$GITHUB_REF_NAME" --draft=false

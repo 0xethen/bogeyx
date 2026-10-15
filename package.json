@@ -1,0 +1,36 @@
+{
+  "name": "bogeyx",
+  "version": "0.0.0",
+  "private": true,
+  "description": "First-party plugins for Bogey",
+  "homepage": "https://github.com/0xethen/bogeyx#readme",
+  "bugs": {
+    "url": "https://github.com/0xethen/bogeyx/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "Ethen Tseggai <public@ethen.app>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xethen/bogeyx.git"
+  },
+  "type": "module",
+  "scripts": {
+    "prepare": "vp config"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.17.0",
+      "onFail": "download"
+    }
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  }
+}

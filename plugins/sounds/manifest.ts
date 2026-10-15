@@ -19,9 +19,7 @@ export const manifest = definePlugin({
       description: "The cue or background music playing now.",
     },
   ],
-  commands: [
-    { action: "toggle_mute", label: "Toggle event sounds", keywords: ["mute", "quiet"] },
-  ],
+  commands: [{ action: "toggle_mute", label: "Toggle event sounds", keywords: ["mute", "quiet"] }],
   // what Sounds notices itself, since nothing else in the browser is watching for it
   signals: [
     { key: "message-received", label: "Someone else writes in a conversation you can read" },

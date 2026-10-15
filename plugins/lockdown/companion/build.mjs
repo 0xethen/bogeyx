@@ -24,7 +24,8 @@ if (bad) {
 const template = JSON.parse(await readFile(join(here, "manifest.template.json"), "utf8"));
 const matches = hosts.flatMap((host) => [`https://${host}/*`]);
 // a trial on localhost is plain http
-for (const host of hosts) if (/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host)) matches.push(`http://${host}/*`);
+for (const host of hosts)
+  if (/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host)) matches.push(`http://${host}/*`);
 template.content_scripts[0].matches = matches;
 
 const out = join(here, "dist");
