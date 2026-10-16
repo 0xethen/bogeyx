@@ -365,7 +365,7 @@ function Proctor({ eventId, settings }: PluginContext<Settings>) {
             <Button
               size="sm"
               variant="ghost"
-              render={<RouterLink to="/events/$slug/manage/extensions" params={{ slug }} />}
+              render={<RouterLink to="/events/$slug/manage/plugins" params={{ slug }} />}
               nativeButton={false}
             >
               <IconSettings /> Manage
