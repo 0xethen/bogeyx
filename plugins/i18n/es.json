@@ -588,7 +588,6 @@
   "checkin.registerAndCheckIn": "Registrar y registrar llegada",
   "checkin.walkInFailed": "No se pudo añadir a la persona",
   "checkin.presentTitle": "Presentes",
-  "checkin.hereOf": "{role} presentes de {total}",
   "checkin.noDivision": "Sin división",
   "checkin.divisionCount": "{division}: {here} de {total}",
   "checkin.recent": "Recién llegados",
