@@ -1209,6 +1209,7 @@
   "settingRow.lockedBy": "Bloqueado por {by}",
   "settingRow.from": "De {from}",
   "settingRow.operator": "Definido en bogey.config.ts",
+  "settingRow.operatorAt": "Definido en bogey.config.ts ({path})",
   "settingSource.org": "la organización",
   "settingSource.instance": "la instancia",
   "settingSource.orgs": "las organizaciones",
