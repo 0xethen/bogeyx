@@ -9,12 +9,16 @@ import {
 } from "@tabler/icons-react";
 import { browserClient } from "@bogey/db/browser";
 import { ok, toFailure, unwrap } from "@bogey/db/errors";
-import { can, useEventAccess } from "@bogey/db/permissions";
+import { can, eventGateQueryOptions, useEventAccess } from "@bogey/db/permissions";
 import { useLiveInvalidate } from "@bogey/db/realtime";
 import { eventPeopleQueryOptions } from "@bogey/db/queries/manage";
 import { eventWindowsQueryOptions, isWindowOpen, windowByKey } from "@bogey/db/queries/windows";
 import { pluginWindow } from "@bogey/plugins/api";
-import { definePluginRuntime, type PluginContext } from "@bogey/plugins/runtime";
+import {
+  definePluginRuntime,
+  useHideEventChrome,
+  type PluginContext,
+} from "@bogey/plugins/runtime";
 import type { SettingsOf } from "@bogey/plugins/types";
 import { Alert, AlertDescription, AlertTitle } from "@bogey/ui/components/alert";
 import { Badge } from "@bogey/ui/components/badge";
@@ -47,7 +51,7 @@ import {
 } from "./database.ts";
 import { manifest } from "./manifest.ts";
 import { SebKeys } from "./seb-keys.tsx";
-import { Link as RouterLink, useParams } from "@tanstack/react-router";
+import { Link as RouterLink, useLocation, useNavigate, useParams } from "@tanstack/react-router";
 
 type Settings = SettingsOf<typeof manifest>;
 
@@ -137,6 +141,7 @@ function useCompanion(onSignal: (kind: SignalKind) => void) {
 
 /** Asks the server whether Safe Exam Browser's headers match a key, every minute. */
 function useSeb(eventId: string, on: boolean) {
+  const queryClient = useQueryClient();
   const [attested, setAttested] = useState<boolean | null>(null);
   useEffect(() => {
     if (!on) return;
@@ -150,12 +155,13 @@ function useSeb(eventId: string, on: boolean) {
             "attested" in body &&
             body.attested === true;
           setAttested(attestedNow);
+          void queryClient.invalidateQueries({ queryKey: eventGateQueryOptions(eventId).queryKey });
         })
         .catch(() => setAttested(false));
     check();
     const timer = window.setInterval(check, 60_000);
     return () => window.clearInterval(timer);
-  }, [eventId, on]);
+  }, [eventId, on, queryClient]);
   return attested;
 }
 
@@ -169,6 +175,7 @@ function Armed({
   children: ReactNode;
 }) {
   const queryClient = useQueryClient();
+  const access = useEventAccess();
   // the server renders the page covered and the browser then says, so the event never shows
   // for a moment before the cover goes up
   const mobile = useExternalValue(never, isMobile, true);
@@ -180,8 +187,12 @@ function Armed({
   });
   const session = own.data ?? null;
 
-  const keep = (row: SessionRow | null) =>
+  // the server decides whether the event is open to them; after each report, ask it again
+  const gate = useQuery(eventGateQueryOptions(eventId));
+  const keep = (row: SessionRow | null) => {
     queryClient.setQueryData(ownSessionQueryOptions(eventId).queryKey, row);
+    void queryClient.invalidateQueries({ queryKey: eventGateQueryOptions(eventId).queryKey });
+  };
   const record = (kind: string) =>
     void client()
       .rpc("lockdown_violation", { p_event: eventId, p_kind: kind })
@@ -191,7 +202,10 @@ function Armed({
     // copying from the page is normal, so it is written down and not counted
     else void browserClient().rpc("log_event", { p_event: eventId, p_action: `lockdown.${kind}` });
   });
-  const requires = settings.mode === "enforce" ? settings.require : "none";
+  // the browser applies whenever lockdown is on; only stopping submissions needs enforce
+  const requires = settings.require;
+  // Safe Exam Browser runs on iPads, so it isn't turned away for being a tablet
+  const turnAway = settings.desktopOnly && requires !== "seb" && mobile;
   const seb = useSeb(eventId, requires === "seb");
 
   const attestation = useRef({ present: companion.present, version: companion.version });
@@ -204,6 +218,7 @@ function Armed({
         p_event: eventId,
         p_extension_version: attestation.current.version ?? undefined,
         p_attested: attestation.current.present,
+        p_fullscreen: inFullscreen(),
       })
       .then(({ data }) => data && keep(data));
 
@@ -212,10 +227,12 @@ function Armed({
     const heartbeat = window.setInterval(beat, 60_000);
 
     const onVisibility = () => {
-      if (document.visibilityState === "hidden") record("tab_switch");
+      if (document.visibilityState === "hidden" && countTabSwitches.current) record("tab_switch");
     };
+    // entering full screen is what reopens the event on the server, so it is said at once
     const onFullscreen = () => {
-      if (!document.fullscreenElement) record("fullscreen_exit");
+      if (document.fullscreenElement) beat();
+      else record("fullscreen_exit");
     };
     const onContextMenu = () => record("inspect_menu");
     document.addEventListener("visibilitychange", onVisibility);
@@ -242,7 +259,43 @@ function Armed({
   const stopped = Boolean(session?.locked_at);
   const text = { count: violations, max };
 
-  if (settings.desktopOnly && mobile) {
+  // whether the event is hidden or held behind a screen; the same checks as the returns below
+  const coveredOtherwise =
+    turnAway ||
+    (settings.mode === "enforce" &&
+      settings.whenStopped === "cover" &&
+      (own.isPending || stopped)) ||
+    (requires === "seb" && seb !== true) ||
+    (requires === "extension" && !companion.present);
+  const covered = coveredOtherwise || (settings.requireFullscreen && !fullscreen);
+  // read by the tab listener, which is set up once and so can't see the latest render
+  const countTabSwitches = useRef(false);
+  useEffect(() => {
+    countTabSwitches.current = settings.recordTabsAlways || (fullscreen && !covered);
+  });
+
+  // The full screen cover lives on the event's home page: every other page sends people there, so
+  // the cover replaces the event and not each page. Manage stays reachable in case an organizer is
+  // caught by mistake.
+  const { slug } = useParams({ strict: false });
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const navigate = useNavigate();
+  const home = slug ? `/events/${slug}` : null;
+  const atHome = home !== null && (pathname === home || pathname === `${home}/`);
+  // only people who can really manage get through; a participant typing /manage gets the cover
+  const inManage =
+    home !== null &&
+    can(access, "event.manage") &&
+    (pathname === `${home}/manage` || pathname.startsWith(`${home}/manage/`));
+  const needsFullscreen = settings.requireFullscreen && !fullscreen;
+  const sendHome = needsFullscreen && home !== null && !atHome && !inManage;
+  // a cover replaces the whole event, tabs included
+  useHideEventChrome(coveredOtherwise || (needsFullscreen && !inManage));
+  useEffect(() => {
+    if (sendHome && slug) void navigate({ to: "/events/$slug", params: { slug }, replace: true });
+  }, [sendHome, slug, navigate]);
+
+  if (turnAway) {
     return (
       <Screen.Fallback
         icon={<IconDeviceDesktop />}
@@ -293,16 +346,25 @@ function Armed({
     );
   }
 
-  if (settings.requireFullscreen && !fullscreen) {
+  // The page is ready but the server hasn't heard yet (a report on its way, or a beat gone stale):
+  // the event's data is still shut, so there is nothing to show.
+  if (!covered && gate.data?.startsWith(`${manifest.key}.`)) {
+    return <Screen.Fallback icon={<IconLock />} title="Checking..." description="One moment." />;
+  }
+
+  if (needsFullscreen && !inManage) {
     return (
       <Screen.Fallback
         icon={<IconMaximize />}
         title="Full screen, please"
-        description="Organizers have locked this part of the event. Entering full screen opens it; leaving full screen or switching tabs is recorded."
+        description={
+          settings.recordTabsAlways
+            ? "Organizers have locked this part of the event. Leaving full screen or switching tabs is recorded."
+            : "Organizers have locked this part of the event. Leaving full screen is recorded."
+        }
       >
         <Button
           onClick={() => {
-            // a refusal leaves this screen up rather than pretending it worked
             void document.documentElement.requestFullscreen().catch(() => undefined);
           }}
         >
@@ -320,11 +382,14 @@ function Armed({
           <AlertDescription>{fill(settings.blockedBody, text)}</AlertDescription>
         </Alert>
       ) : (
-        violations > 0 && (
+        violations > 0 &&
+        (settings.leaveTitle || settings.leaveBody) && (
           // a new violation shows it again
           <Alert key={violations} dismissable className="rounded-none">
-            <AlertTitle>{fill(settings.leaveTitle, text)}</AlertTitle>
-            <AlertDescription>{fill(settings.leaveBody, text)}</AlertDescription>
+            {settings.leaveTitle && <AlertTitle>{fill(settings.leaveTitle, text)}</AlertTitle>}
+            {settings.leaveBody && (
+              <AlertDescription>{fill(settings.leaveBody, text)}</AlertDescription>
+            )}
           </Alert>
         )
       )}

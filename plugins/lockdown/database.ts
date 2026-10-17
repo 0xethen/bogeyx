@@ -17,6 +17,7 @@ export type SessionRow = {
   attested_by: Attestation | null;
   violations: number;
   locked_at: string | null;
+  fullscreen_at: string | null;
 };
 
 export type SebKeyRow = {
@@ -39,7 +40,12 @@ export type LockdownDatabase = {
     Views: { [_ in never]: never };
     Functions: {
       lockdown_heartbeat: {
-        Args: { p_event: string; p_extension_version?: string; p_attested?: boolean };
+        Args: {
+          p_event: string;
+          p_extension_version?: string;
+          p_attested?: boolean;
+          p_fullscreen?: boolean;
+        };
         Returns: SessionRow;
       };
       lockdown_violation: {

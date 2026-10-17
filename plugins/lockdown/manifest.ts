@@ -4,7 +4,7 @@ export const manifest = definePlugin({
   key: "lockdown",
   name: "Lockdown",
   api: 1,
-  version: "1.0.0",
+  version: "1.1.0",
   description: "Asks for full screen and records tab switches while its window is open.",
   author: { name: "Ethen Tseggai", url: "https://github.com/0xethen" },
   license: "MIT",
@@ -16,6 +16,7 @@ export const manifest = definePlugin({
   actions: [
     "tab_switch",
     "fullscreen_exit",
+    "fullscreen_entered",
     "inspect_menu",
     "window_blur",
     "devtools",
@@ -36,10 +37,11 @@ export const manifest = definePlugin({
       settings: [
         "mode",
         "during",
+        "require",
         "maxViolations",
         "whenStopped",
-        "require",
         "requireFullscreen",
+        "recordTabsAlways",
         "desktopOnly",
       ],
     },
@@ -73,7 +75,7 @@ export const manifest = definePlugin({
       showWhen: { setting: "mode", in: ["monitor", "enforce"] },
       options: [
         { value: "always", label: "Whenever they have the event open" },
-        { value: "window", label: "Only while the Lockdown window is open" },
+        { value: "window", label: 'Only while the "Lockdown" window is open' },
       ],
     },
     maxViolations: {
@@ -99,43 +101,57 @@ export const manifest = definePlugin({
     },
     require: {
       type: "select",
-      label: "Require to submit",
+      label: "Browser",
       description:
-        "Stops submissions from browsers that haven't shown they have it. Both are a deterrent: they report themselves.",
+        "What participants have to use. The event stays covered until they open it in that browser; with stopping on, submissions from any other are refused too. Both report themselves, so they're a deterrent.",
       default: "none",
-      showWhen: { setting: "mode", in: ["enforce"] },
+      showWhen: { setting: "mode", in: ["monitor", "enforce"] },
       options: [
-        { value: "none", label: "Nothing more" },
-        { value: "extension", label: "The Bogey lockdown companion extension" },
+        { value: "none", label: "Any browser" },
+        { value: "extension", label: "Chrome or Edge with the Bogey lockdown extension" },
         { value: "seb", label: "Safe Exam Browser (keys under Lockdown)" },
       ],
     },
     requireFullscreen: {
       type: "boolean",
       label: "Require full screen",
-      description: "The event's pages stay covered until participants enter full screen.",
+      description:
+        "Until participants enter full screen, the event is closed to them: every page sends them to its home, which asks for full screen.",
       default: true,
+      showWhen: { setting: "mode", in: ["monitor", "enforce"] },
+    },
+    recordTabsAlways: {
+      type: "boolean",
+      label: "Record tab switches when not in full screen or covered",
+      description:
+        "Off: a tab switch counts only while the event is open in full screen and not covered. On: every tab switch counts.",
+      default: false,
       showWhen: { setting: "mode", in: ["monitor", "enforce"] },
     },
     desktopOnly: {
       type: "boolean",
       label: "Turn away phones and tablets",
-      description: "A mobile browser can't lock anything down.",
+      description:
+        "A mobile browser can't lock anything down. Safe Exam Browser can (it has an iPad app), so this is off while it's required.",
       default: true,
-      showWhen: { setting: "mode", in: ["monitor", "enforce"] },
+      showWhen: [
+        { setting: "mode", in: ["monitor", "enforce"] },
+        { setting: "require", in: ["none", "extension"] },
+      ],
     },
     leaveTitle: {
       type: "string",
       label: "Title when someone leaves the page",
-      description: "{times} becomes once, or a number of times.",
-      default: "You left this page {times}",
+      description: "{times} becomes once, or a number of times. Empty shows nothing.",
+      default: "",
       showWhen: { setting: "mode", in: ["monitor", "enforce"] },
     },
     leaveBody: {
       type: "string",
       label: "Text when someone leaves the page",
-      description: "{count} is how many times so far, {max} the most before they're stopped.",
-      default: "Organizers can see this.",
+      description:
+        "{count} is how many times so far, {max} the most before they're stopped. Empty shows nothing.",
+      default: "",
       multiline: true,
       showWhen: { setting: "mode", in: ["monitor", "enforce"] },
     },
