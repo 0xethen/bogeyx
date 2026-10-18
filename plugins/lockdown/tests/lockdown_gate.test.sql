@@ -1,6 +1,6 @@
 -- Lockdown 1.1: the cover holds on the server. A covered participant holds no permission in the event.
 begin;
-select plan(13);
+select plan(15);
 
 insert into public.orgs (id, slug, name) values (tests.u('org'), 'alpha', 'Alpha');
 insert into public.events (id, org_id, slug, name, kind, visibility, team_size_max) values
@@ -45,6 +45,17 @@ reset role;
 
 select tests.as_user(tests.u('org1'));
 select is(public.event_gate(tests.u('cup')), null, 'organizers are never gated');
+reset role;
+
+insert into public.event_windows (event_id, key, opens_at, closes_at) values
+  (tests.u('cup'), 'submissions', now() - interval '2 hours', now() - interval '1 hour');
+select tests.as_user(tests.u('amy'));
+select is(public.event_gate(tests.u('cup')), null, 'lockdown lifts once submissions close, as the page does');
+reset role;
+insert into public.event_windows (event_id, key, opens_at, closes_at) values
+  (tests.u('cup'), 'challenges.contest', now() - interval '1 hour', now() + interval '1 hour');
+select tests.as_user(tests.u('amy'));
+select is(public.event_gate(tests.u('cup')), 'lockdown.stopped', 'though an open contest is what counts when there is one');
 reset role;
 
 update public.settings set value = '{"mode":"off"}' where event_id = tests.u('cup') and namespace = 'plugin.lockdown';

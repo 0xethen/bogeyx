@@ -15,6 +15,16 @@ insert into public.event_role_grants (event_id, user_id, role_key) values (tests
 -- challenges_submit calls this as its owner; the test calls it as the participant, so for this transaction only
 grant execute on function private.lockdown_assert_can_submit(uuid) to authenticated;
 
+-- amy signs in to SEB on a session of her own; a check needs it and a nonce in the address
+create function pg_temp.as_amy() returns void language sql as $$
+  select set_config('request.jwt.claims', json_build_object('sub', tests.u('amy'), 'role', 'authenticated',
+    'aal', 'aal2', 'session_id', 'seb')::text, true);
+  select set_config('role', 'authenticated', true);
+$$;
+grant execute on function pg_temp.as_amy() to authenticated;
+create temp table urls (name text primary key, url text);
+grant all on urls to authenticated;
+
 -- keys are the proctors'
 select tests.as_user(tests.u('amy'));
 select throws_ok($$select public.lockdown_set_seb_keys(tests.u('cup'), '[]')$$, '42501', null, 'a participant can''t set keys');
@@ -25,7 +35,9 @@ select is(public.lockdown_set_seb_keys(tests.u('cup'), jsonb_build_array(
   jsonb_build_object('kind', 'config', 'value', upper(repeat('b', 64)), 'label', ''))), 2, 'a proctor saves two keys');
 select is((select count(*)::integer from public.lockdown_seb_keys), 2, 'and reads them');
 reset role;
-select tests.as_user(tests.u('amy'));
+select pg_temp.as_amy();
+insert into urls select n, 'https://x.test/' || n || '?nonce=' || public.lockdown_seb_nonce(tests.u('cup'))
+  from unnest(array['a', 'b']) n;
 select is_empty($$select 1 from public.lockdown_seb_keys$$, 'a participant reads none');
 
 -- submitting without attesting is refused
@@ -33,24 +45,25 @@ select throws_ok($$select private.lockdown_assert_can_submit(tests.u('cup'))$$, 
 
 -- a wrong hash doesn't attest
 select is(public.lockdown_check_seb(tests.u('cup'), 'https://x.test/a', 'nope', 'nope'), false, 'a wrong hash is refused');
+insert into urls values ('a2', 'https://x.test/a?nonce=' || public.lockdown_seb_nonce(tests.u('cup')));
 
 -- the right hash does: sha256(url + key)
-select is(public.lockdown_check_seb(tests.u('cup'), 'https://x.test/a',
-  encode(extensions.digest('https://x.test/a' || repeat('a', 64), 'sha256'), 'hex'), null), true, 'a Browser Exam Key hash attests');
+select is(public.lockdown_check_seb(tests.u('cup'), (select url from urls where name = 'a2'),
+  encode(extensions.digest((select url from urls where name = 'a2') || repeat('a', 64), 'sha256'), 'hex'), null), true, 'a Browser Exam Key hash attests');
 select lives_ok($$select private.lockdown_assert_can_submit(tests.u('cup'))$$, 'and submitting is allowed');
 select is((select attested_by from public.lockdown_sessions where user_id = tests.u('amy')), 'seb', 'recorded as SEB');
 
 -- a config key hash works too, in either case
 reset role;
 update public.lockdown_sessions set attested_at = null, attested_by = null where user_id = tests.u('amy');
-select tests.as_user(tests.u('amy'));
-select is(public.lockdown_check_seb(tests.u('cup'), 'https://x.test/b', null,
-  upper(encode(extensions.digest('https://x.test/b' || repeat('b', 64), 'sha256'), 'hex'))), true, 'a Config Key hash attests');
+select pg_temp.as_amy();
+select is(public.lockdown_check_seb(tests.u('cup'), (select url from urls where name = 'b'), null,
+  upper(encode(extensions.digest((select url from urls where name = 'b') || repeat('b', 64), 'sha256'), 'hex'))), true, 'a Config Key hash attests');
 
 -- an old attestation lapses
 reset role;
 update public.lockdown_sessions set attested_at = now() - interval '5 minutes' where user_id = tests.u('amy');
-select tests.as_user(tests.u('amy'));
+select pg_temp.as_amy();
 select throws_ok($$select private.lockdown_assert_can_submit(tests.u('cup'))$$, 'P0001', null, 'after three minutes it lapses');
 
 -- the extension can't stand in for SEB

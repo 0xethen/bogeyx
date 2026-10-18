@@ -1,8 +1,8 @@
 import type { PluginServerContext } from "@bogey/plugins/runtime";
 import type { LockdownDatabase } from "./database.ts";
 
-// `POST /seb-check?event=`: Safe Exam Browser adds a hash of the address it requested to every
-// request. Only the server sees those headers, so this route hands them to the database, which
+// `POST /seb-check?event=&nonce=`: Safe Exam Browser adds a hash of the address it requested to every
+// request. The nonce (from lockdown_seb_nonce) makes each address, and so each hash, good once. Only the server sees those headers, so this route hands them to the database, which
 // compares them with the event's keys (the participant never gets to read the keys).
 
 const REQUEST_HASH = "x-safeexambrowser-requesthash";
@@ -35,4 +35,20 @@ export async function sebCheck(request: Request, ctx: PluginServerContext): Prom
   });
   if (error) return Response.json({ error: "Couldn't check." }, { status: 403 });
   return Response.json({ attested: data });
+}
+
+// `GET /seb-config/:token`: the .seb file SEB opens. SEB downloads it before anyone signs in, so the
+// token in the address is what lets it through (see `lockdown_seb_file`).
+export async function sebConfigFile(ctx: PluginServerContext): Promise<Response> {
+  const token = ctx.params.token ?? "";
+  const { data, error } = await ctx
+    .supabaseFor<LockdownDatabase>()
+    .rpc("lockdown_seb_file", { p_token: token });
+  if (error || !data) return Response.json({ error: "not found" }, { status: 404 });
+  return new Response(data, {
+    headers: {
+      "content-type": "application/seb",
+      "content-disposition": 'attachment; filename="bogey.seb"',
+    },
+  });
 }

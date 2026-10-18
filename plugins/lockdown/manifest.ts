@@ -4,7 +4,7 @@ export const manifest = definePlugin({
   key: "lockdown",
   name: "Lockdown",
   api: 1,
-  version: "1.1.0",
+  version: "1.3.0",
   description: "Asks for full screen and records tab switches while its window is open.",
   author: { name: "Ethen Tseggai", url: "https://github.com/0xethen" },
   license: "MIT",
@@ -23,10 +23,24 @@ export const manifest = definePlugin({
     "new_window",
     "clipboard",
     "seb_keys_saved",
+    "seb_config_saved",
     "unlocked",
   ],
-  // Safe Exam Browser's request headers only reach the server, which hands them to the database
-  serverRoutes: [{ path: "/seb-check", method: "POST" }],
+  // Safe Exam Browser's request headers only reach the server, which hands them to the database;
+  // SEB downloads its configuration before anyone signs in
+  serverRoutes: [
+    { path: "/seb-check", method: "POST" },
+    { path: "/seb-config/:token", method: "GET" },
+  ],
+  // which browser participants use, and Safe Exam Browser's configuration, on a page of its own
+  settingsPages: [
+    {
+      key: "browser",
+      label: "Lockdown Browser",
+      description: "The browser participants have to use, and how Safe Exam Browser is set up.",
+      route: "/browser",
+    },
+  ],
   // with the event's other security settings, in Manage → Security
   settingsSections: [
     {
@@ -37,13 +51,18 @@ export const manifest = definePlugin({
       settings: [
         "mode",
         "during",
-        "require",
         "maxViolations",
         "whenStopped",
         "requireFullscreen",
         "recordTabsAlways",
-        "desktopOnly",
       ],
+    },
+    {
+      key: "browser",
+      title: "Browser",
+      description: "What participants open the event in.",
+      page: "browser",
+      settings: ["require", "desktopOnly"],
     },
     {
       key: "messages",
@@ -53,7 +72,12 @@ export const manifest = definePlugin({
       settings: ["leaveTitle", "leaveBody", "blockedTitle", "blockedBody"],
     },
   ],
-  routes: [{ path: "/proctor", label: "Lockdown", permission: "lockdown.review" }],
+  routes: [
+    { path: "/proctor", label: "Lockdown", permission: "lockdown.review" },
+    { path: "/browser", area: "manage", label: "Lockdown Browser" },
+    // where the event goes once problems close; Safe Exam Browser quits on it
+    { path: "/done" },
+  ],
   settings: {
     mode: {
       type: "select",
@@ -109,7 +133,7 @@ export const manifest = definePlugin({
       options: [
         { value: "none", label: "Any browser" },
         { value: "extension", label: "Chrome or Edge with the Bogey lockdown extension" },
-        { value: "seb", label: "Safe Exam Browser (keys under Lockdown)" },
+        { value: "seb", label: "Safe Exam Browser" },
       ],
     },
     requireFullscreen: {
@@ -169,7 +193,10 @@ export const manifest = definePlugin({
       showWhen: { setting: "mode", in: ["enforce"] },
     },
   },
-  uses: { tables: ["lockdown_sessions", "lockdown_seb_keys"], settings: ["plugin.lockdown"] },
+  uses: {
+    tables: ["lockdown_sessions", "lockdown_seb_keys", "lockdown_seb_configs"],
+    settings: ["plugin.lockdown"],
+  },
 });
 
 export default manifest;

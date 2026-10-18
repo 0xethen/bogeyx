@@ -3,17 +3,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   IconDeviceDesktop,
   IconLock,
+  IconLockCancel,
   IconMaximize,
   IconPlugConnected,
-  IconSettings,
 } from "@tabler/icons-react";
 import { browserClient } from "@bogey/db/browser";
 import { ok, toFailure, unwrap } from "@bogey/db/errors";
 import { can, eventGateQueryOptions, useEventAccess } from "@bogey/db/permissions";
 import { useLiveInvalidate } from "@bogey/db/realtime";
 import { eventPeopleQueryOptions } from "@bogey/db/queries/manage";
-import { eventWindowsQueryOptions, isWindowOpen, windowByKey } from "@bogey/db/queries/windows";
+import {
+  eventWindowsQueryOptions,
+  isWindowOpen,
+  windowByKey,
+  type EventWindow,
+} from "@bogey/db/queries/windows";
 import { pluginWindow } from "@bogey/plugins/api";
+import { createPluginNav } from "@bogey/plugins/nav";
 import {
   definePluginRuntime,
   useHideEventChrome,
@@ -46,16 +52,27 @@ import {
 import {
   client,
   ownSessionQueryOptions,
+  sebFileUrl,
+  sebLinkQueryOptions,
+  sebNonce,
+  sebReadyQueryOptions,
   sessionsQueryOptions,
   type SessionRow,
 } from "./database.ts";
 import { manifest } from "./manifest.ts";
-import { SebKeys } from "./seb-keys.tsx";
+import { BrowserPage } from "./seb-browser.tsx";
+import { donePath, sebLink } from "./seb-config.ts";
+import { EventListIcon } from "./list-icon.tsx";
 import { Link as RouterLink, useLocation, useNavigate, useParams } from "@tanstack/react-router";
 
 type Settings = SettingsOf<typeof manifest>;
 
+const { useGoTo } = createPluginNav(manifest);
+
 const ARMED = pluginWindow(manifest, "armed");
+// problems are submitted in the challenges contest when there is one, else in the event's submissions
+const CONTEST = "challenges.contest";
+const SUBMISSIONS = "submissions";
 
 /** Fills `{times}`, `{count}` and `{max}` in a message an organizer wrote. */
 function fill(template: string, values: { count: number; max: number | null }): string {
@@ -79,6 +96,63 @@ function onFullscreenChange(change: () => void) {
   return () => document.removeEventListener("fullscreenchange", change);
 }
 
+/** Safe Exam Browser adds `SEB/<version>` to its user agent. */
+const inSeb = () => / SEB\//.test(navigator.userAgent);
+
+/** Whether the window problems are submitted in has closed, and not just not opened yet. */
+function hasClosed(window: EventWindow | undefined, now: number): boolean {
+  if (!window) return false;
+  if (window.override) return window.override === "closed";
+  return window.closes_at !== null && now >= new Date(window.closes_at).getTime();
+}
+
+// setTimeout takes at most a 32-bit number of milliseconds
+const LONGEST_TIMEOUT = 2 ** 31 - 1;
+
+/** Whether problems can no longer be submitted, turning true the moment the window closes. */
+function useProblemsClosed(windows: Tuple<EventWindow>): boolean {
+  const submitting = windowByKey(windows, CONTEST) ?? windowByKey(windows, SUBMISSIONS);
+  const [now, setNow] = useState(() => Date.now());
+  const closesAt = submitting?.closes_at ? new Date(submitting.closes_at).getTime() : null;
+  useEffect(() => {
+    if (closesAt === null || closesAt <= now) return;
+    const timer = window.setTimeout(
+      () => setNow(Date.now()),
+      Math.min(closesAt - now + 250, LONGEST_TIMEOUT),
+    );
+    return () => window.clearTimeout(timer);
+  }, [closesAt, now]);
+  return hasClosed(submitting, now);
+}
+
+/**
+ * Once problems close there is nothing left to lock down. Safe Exam Browser opens the quit link,
+ * which it quits on; a browser that had the event open while they were open goes to the scoreboard.
+ */
+function useLeaveWhenClosed(closed: boolean, participant: boolean) {
+  const { slug } = useParams({ strict: false });
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const goTo = useGoTo();
+  const sawOpen = useRef(false);
+  // an old file without the quit link loads the page instead of quitting; going again would loop
+  const there = slug !== undefined && pathname === donePath(slug);
+  useEffect(() => {
+    if (!participant || !slug || there) return;
+    if (!closed) {
+      sawOpen.current = true;
+      return;
+    }
+    // a real navigation: SEB only sees the quit link when the page loads it
+    if (inSeb()) window.location.assign(donePath(slug));
+    else if (sawOpen.current) {
+      sawOpen.current = false;
+      void goTo("/done", { replace: true });
+    }
+    // goTo is a new function each render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [closed, participant, slug, there]);
+}
+
 /** Around the event's pages for participants while the Lockdown window is open. */
 function Lockdown({
   eventId,
@@ -87,9 +161,12 @@ function Lockdown({
 }: PluginContext<Settings> & { children: ReactNode }) {
   const access = useEventAccess();
   const windows = useQuery(eventWindowsQueryOptions(eventId));
+  const closed = useProblemsClosed(windows.data ?? []);
+  const participant = settings.mode !== "off" && access?.role === "participant";
+  useLeaveWhenClosed(closed, participant);
   const armed =
-    settings.mode !== "off" &&
-    access?.role === "participant" &&
+    participant &&
+    !closed &&
     (settings.during === "always" || isWindowOpen(windowByKey(windows.data ?? [], ARMED)));
   return armed ? (
     <Armed eventId={eventId} settings={settings}>
@@ -145,8 +222,12 @@ function useSeb(eventId: string, on: boolean) {
   const [attested, setAttested] = useState<boolean | null>(null);
   useEffect(() => {
     if (!on) return;
+    // the nonce goes in the address SEB hashes, so each header is good for one check
     const check = () =>
-      void fetch(`/api/x/lockdown/seb-check?event=${eventId}`, { method: "POST" })
+      void sebNonce(eventId)
+        .then((nonce) =>
+          fetch(`/api/x/lockdown/seb-check?event=${eventId}&nonce=${nonce}`, { method: "POST" }),
+        )
         .then((response) => (response.ok ? response.json() : null))
         .then((body: unknown) => {
           const attestedNow =
@@ -160,7 +241,15 @@ function useSeb(eventId: string, on: boolean) {
         .catch(() => setAttested(false));
     check();
     const timer = window.setInterval(check, 60_000);
-    return () => window.clearInterval(timer);
+    // coming back to the page asks at once, so a browser that isn't SEB is caught on return too
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [eventId, on, queryClient]);
   return attested;
 }
@@ -183,6 +272,10 @@ function Armed({
   const own = useQuery(ownSessionQueryOptions(eventId));
   // organizers stopping, or letting someone back in, reach their page at once
   useLiveInvalidate("lockdown_sessions", ownSessionQueryOptions(eventId).queryKey, {
+    filter: `event_id=eq.${eventId}`,
+  });
+  // and what the server decides from it: a failed check in another browser closes this one too
+  useLiveInvalidate("lockdown_sessions", eventGateQueryOptions(eventId).queryKey, {
     filter: `event_id=eq.${eventId}`,
   });
   const session = own.data ?? null;
@@ -323,16 +416,10 @@ function Armed({
   }
 
   if (requires === "seb" && seb !== true) {
-    return (
-      <Screen.Fallback
-        icon={<IconLock />}
-        title={seb === null ? "Checking..." : "Open this event in Safe Exam Browser"}
-        description={
-          seb === null
-            ? "One moment."
-            : "Organizers require Safe Exam Browser for this part of the event. Open the event from it with the exam configuration they gave you."
-        }
-      />
+    return seb === null ? (
+      <Screen.Fallback icon={<IconLock />} title="Checking..." description="One moment." />
+    ) : (
+      <OpenInSeb eventId={eventId} />
     );
   }
 
@@ -398,6 +485,91 @@ function Armed({
   );
 }
 
+/** The cover while Safe Exam Browser is required, with the link that opens it when Bogey has one. */
+function OpenInSeb({ eventId }: { eventId: string }) {
+  const token = useQuery(sebLinkQueryOptions(eventId));
+  const ready = useQuery(sebReadyQueryOptions(eventId));
+  const file = token.data ? sebFileUrl(window.location.origin, token.data) : null;
+  if (ready.data === false) {
+    return (
+      <Screen.Fallback
+        icon={<IconLockCancel />}
+        title="Safe Exam Browser isn't set up yet"
+        description="Organizers require Safe Exam Browser for this part of the event but haven't finished setting it up, so the event stays closed in every browser. Tell an organizer."
+      />
+    );
+  }
+  if (inSeb()) {
+    return (
+      <Screen.Fallback
+        icon={<IconLockCancel />}
+        title="This Safe Exam Browser isn't the one for this event"
+        description="Safe Exam Browser is open, but its configuration doesn't match the event's, so the event stays closed. Quit it and open the event with the link organizers gave you, or tell an organizer."
+      >
+        {file && (
+          <Button render={<a href={sebLink(file)} />} nativeButton={false}>
+            Open with the event's configuration
+          </Button>
+        )}
+      </Screen.Fallback>
+    );
+  }
+  return (
+    <Screen.Fallback
+      icon={<IconLockCancel />}
+      title="Open this event in Safe Exam Browser"
+      description={
+        file
+          ? "Organizers require a lockdown browser for this part of the event. Install Safe Exam Browser, then open the event in it. Sign in there with a code."
+          : "Organizers require a lockdown browser for this part of the event. Open it with the URL they gave you."
+      }
+    >
+      {file && (
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button render={<a href={sebLink(file)} />} nativeButton={false}>
+            Open in Safe Exam Browser
+          </Button>
+          <Button
+            variant="outline"
+            render={
+              <a
+                href="https://safeexambrowser.org/download_en.html"
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
+            nativeButton={false}
+          >
+            Get Safe Exam Browser
+          </Button>
+        </div>
+      )}
+    </Screen.Fallback>
+  );
+}
+
+/** Where the event goes once problems close: on to the scoreboard, or the event's home without one. */
+function Done({ eventId }: PluginContext<Settings>) {
+  const { slug = "" } = useParams({ strict: false });
+  const navigate = useNavigate();
+  const windows = useQuery(eventWindowsQueryOptions(eventId));
+  const contest = windows.data ? windowByKey(windows.data, CONTEST) : undefined;
+  useEffect(() => {
+    if (!windows.data || !slug) return;
+    void navigate({
+      to: contest ? `/events/${slug}/x/challenges/scoreboard` : `/events/${slug}`,
+      replace: true,
+    });
+  }, [windows.data, contest, slug, navigate]);
+  return (
+    <Screen.Fallback
+      icon={<IconLock />}
+      title="Time's up"
+      description="Problems can't be submitted any more. Taking you to the scoreboard."
+    />
+  );
+}
+
 // ── proctor ─────────────────────────────────────────────────────────────────
 
 function Proctor({ eventId, settings }: PluginContext<Settings>) {
@@ -429,11 +601,11 @@ function Proctor({ eventId, settings }: PluginContext<Settings>) {
           <>
             <Button
               size="sm"
-              variant="ghost"
+              variant="outline"
               render={<RouterLink to="/events/$slug/manage/plugins" params={{ slug }} />}
               nativeButton={false}
             >
-              <IconSettings /> Manage
+              Manage
             </Button>
           </>
         )
@@ -505,15 +677,16 @@ function Proctor({ eventId, settings }: PluginContext<Settings>) {
           </div>
         </>
       )}
-      {settings.require === "seb" && <SebKeys eventId={eventId} />}
     </Screen>
   );
 }
 
 export default definePluginRuntime(manifest, {
-  routes: { "/proctor": Proctor },
+  routes: { "/proctor": Proctor, "/browser": BrowserPage, "/done": Done },
   serverRoutes: {
     "POST /seb-check": async (request, ctx) => (await import("./seb.ts")).sebCheck(request, ctx),
+    "GET /seb-config/:token": async (_request, ctx) =>
+      (await import("./seb.ts")).sebConfigFile(ctx),
   },
-  slots: { eventWrapper: Lockdown },
+  slots: { eventWrapper: Lockdown, eventListIcon: EventListIcon },
 });

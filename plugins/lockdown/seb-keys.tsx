@@ -42,11 +42,11 @@ export function SebKeys({ eventId }: { eventId: string }) {
   return (
     <Screen.Section
       title="Safe Exam Browser keys"
-      description="Safe Exam Browser sends a hash of each address it opens, made with its Browser Exam Key or Config Key (from the exam configuration). A request that matches one of these keys counts as coming from it. Anyone who knows a key can fake the hash, so keep them to proctors."
+      description="Safe Exam Browser sends a hash of each address it opens, made with its Browser Exam Key or Config Key (from the exam configuration). A request that matches one of these keys counts as coming from it. A Config Key can be worked out by anyone with the configuration file, so it keeps people honest; a Browser Exam Key also depends on the SEB build, and is the strong check. Anyone who knows a key can fake the hash, so keep them to proctors."
     >
       <ErrorAlert error={save.error} title="Couldn't save the keys" />
       {current.length === 0 ? (
-        <p className="text-sm text-muted-fg">No keys yet. Nobody can pass the check.</p>
+        <p className="text-sm text-muted-fg">No keys of your own yet. The generated file's Config Key still passes.</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border border-y border-border">
           {current.map((key) => (
