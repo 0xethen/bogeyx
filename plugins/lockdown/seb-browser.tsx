@@ -1,6 +1,7 @@
+import { WindowWarning } from "./window-warning.tsx";
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import {
   IconCheck,
   IconCopy,
@@ -63,9 +64,10 @@ export function BrowserPage({ eventId, settings, settingsSections }: PluginConte
   return (
     <Screen
       title="Lockdown Browser"
-      description={<>The browser participants have to open the event in. <Link to={`/events/${eventId}/manage/security#lockdown.lockdown`} className="link">Configure Lockdown</Link></>}
+      description="Lockdown settings, the browser participants have to open the event in, and Safe Exam Browser's setup."
       width="embedded"
     >
+      <WindowWarning eventId={eventId} settings={settings} />
       {settingsSections}
       {settings.require === "seb" && <SebSetup eventId={eventId} />}
       {settings.require === "extension" && (

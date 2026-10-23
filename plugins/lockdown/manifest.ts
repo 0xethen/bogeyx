@@ -4,7 +4,7 @@ export const manifest = definePlugin({
   key: "lockdown",
   name: "Lockdown",
   api: 1,
-  version: "1.3.0",
+  version: "1.4.0",
   description: "Asks for full screen and records tab switches while its window is open.",
   author: { name: "Ethen Tseggai", url: "https://github.com/0xethen" },
   license: "MIT",
@@ -37,17 +37,18 @@ export const manifest = definePlugin({
     {
       key: "browser",
       label: "Lockdown Browser",
-      description: "The browser participants have to use, and how Safe Exam Browser is set up.",
+      description:
+        "Lockdown settings, the browser participants have to use, and how Safe Exam Browser is set up.",
       route: "/browser",
     },
   ],
-  // with the event's other security settings, in Manage → Security
+  // general lockdown settings sit above the browser's on the Lockdown Browser page
   settingsSections: [
     {
       key: "lockdown",
       title: "Lockdown",
       description: "Full screen, tab switches and what happens when people leave the page.",
-      page: "security",
+      page: "browser",
       settings: [
         "mode",
         "during",
@@ -59,7 +60,7 @@ export const manifest = definePlugin({
     },
     {
       key: "browser",
-      title: "Browser",
+      title: "Lockdown Browser",
       description: "What participants open the event in.",
       page: "browser",
       settings: ["require", "desktopOnly"],
@@ -95,11 +96,11 @@ export const manifest = definePlugin({
       label: "When it applies",
       description:
         "Participants are locked down whenever they have the event open, or only while the Lockdown window is open on the agenda.",
-      default: "always",
+      default: "window",
       showWhen: { setting: "mode", in: ["monitor", "enforce"] },
       options: [
-        { value: "always", label: "Whenever they have the event open" },
         { value: "window", label: 'Only while the "Lockdown" window is open' },
+        { value: "always", label: "Whenever they have the event open" },
       ],
     },
     maxViolations: {

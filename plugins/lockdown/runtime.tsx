@@ -60,6 +60,8 @@ import {
   type SessionRow,
 } from "./database.ts";
 import { manifest } from "./manifest.ts";
+import { lockdownApplies } from "./schedule.ts";
+import { WindowWarning } from "./window-warning.tsx";
 import { BrowserPage } from "./seb-browser.tsx";
 import { donePath, sebLink } from "./seb-config.ts";
 import { EventListIcon } from "./list-icon.tsx";
@@ -166,8 +168,7 @@ function Lockdown({
   useLeaveWhenClosed(closed, participant);
   const armed =
     participant &&
-    !closed &&
-    (settings.during === "always" || isWindowOpen(windowByKey(windows.data ?? [], ARMED)));
+    lockdownApplies(settings, isWindowOpen(windowByKey(windows.data ?? [], ARMED)), closed);
   return armed ? (
     <Armed eventId={eventId} settings={settings}>
       {children}
@@ -688,5 +689,11 @@ export default definePluginRuntime(manifest, {
     "GET /seb-config/:token": async (_request, ctx) =>
       (await import("./seb.ts")).sebConfigFile(ctx),
   },
-  slots: { eventWrapper: Lockdown, eventListIcon: EventListIcon },
+  slots: {
+    eventWrapper: Lockdown,
+    eventListIcon: EventListIcon,
+    manageOverview: ({ eventId, settings }) => (
+      <WindowWarning eventId={eventId} settings={settings} />
+    ),
+  },
 });

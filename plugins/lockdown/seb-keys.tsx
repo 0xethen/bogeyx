@@ -46,7 +46,9 @@ export function SebKeys({ eventId }: { eventId: string }) {
     >
       <ErrorAlert error={save.error} title="Couldn't save the keys" />
       {current.length === 0 ? (
-        <p className="text-sm text-muted-fg">No keys of your own yet. The generated file's Config Key still passes.</p>
+        <p className="text-sm text-muted-fg">
+          No keys of your own yet. The generated file's Config Key still passes.
+        </p>
       ) : (
         <ul className="flex flex-col divide-y divide-border border-y border-border">
           {current.map((key) => (

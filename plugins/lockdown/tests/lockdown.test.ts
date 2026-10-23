@@ -9,6 +9,7 @@ import {
   parseCompanionMessage,
 } from "../companion.ts";
 import { requestedUrl } from "../seb.ts";
+import { lockdownApplies, windowWarning } from "../schedule.ts";
 import {
   donePath,
   readSebConfig,
@@ -162,4 +163,28 @@ test("a link to the file opens SEB", () => {
     "sebs://bogey.test/api/x/lockdown/seb-config/ab",
   );
   assert.equal(sebLink("http://localhost:3000/f"), "seb://localhost:3000/f");
+});
+
+test("lockdown waits for its window when it only applies during it", () => {
+  const during = { mode: "enforce", during: "window" };
+  assert.equal(lockdownApplies(during, false, false), false);
+  assert.equal(lockdownApplies(during, true, false), true);
+  assert.equal(lockdownApplies({ mode: "enforce", during: "always" }, false, false), true);
+  assert.equal(lockdownApplies({ mode: "off", during: "always" }, true, false), false);
+  assert.equal(lockdownApplies(during, true, true), false);
+});
+
+test("the window warning shows only for an enabled lockdown waiting on a closed or unset window", () => {
+  const during = { mode: "monitor", during: "window" };
+  assert.equal(windowWarning(during, { exists: false, open: false }), "unset");
+  assert.equal(windowWarning(during, { exists: true, open: false }), "closed");
+  assert.equal(windowWarning(during, { exists: true, open: true }), null);
+  assert.equal(
+    windowWarning({ mode: "off", during: "window" }, { exists: true, open: false }),
+    null,
+  );
+  assert.equal(
+    windowWarning({ mode: "monitor", during: "always" }, { exists: false, open: false }),
+    null,
+  );
 });
