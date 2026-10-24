@@ -19,6 +19,9 @@ defaults:
 jobs:
   ready:
     runs-on: ubuntu-latest
+    # write access is only used to push the formatting commit on main
+    permissions:
+      contents: write
     steps:
       # the same layout as a local checkout: plugins/ next to Bogey's monorepo/
       - uses: actions/checkout@v7.0.1
@@ -39,6 +42,17 @@ jobs:
       - run: node tools/cli/src/bin.ts plugins link ../plugins
         working-directory: monorepo
       - run: vp install
+      # formatting alone never fails the run: format first, then check the rest
+      - run: vp fmt
+      - name: commit formatting (main only)
+        if: github.event_name == 'push'
+        continue-on-error: true
+        run: |
+          git diff --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --all --message "style: format with vp fmt"
+          git push
       - run: vp check
       - run: vp test
       - run: vp run index:check
