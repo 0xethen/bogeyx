@@ -202,7 +202,7 @@ function withLibrary(draft: Setup, fresh: Setup): Setup {
 }
 
 async function freshSetup(queryClient: QueryClient, eventId: string): Promise<Setup> {
-  return queryClient.fetchQuery({ ...setupQueryOptions(eventId), staleTime: 0 });
+  return queryClient.query({ ...setupQueryOptions(eventId), staleTime: 0 });
 }
 
 // ── the page ────────────────────────────────────────────────────────────
