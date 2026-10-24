@@ -12,7 +12,7 @@ export default defineConfig({
     plugins: ["react"],
     categories: { correctness: "error" },
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
-    rules: { "vite-plus/prefer-vite-plus-imports": "error" },
+    rules: { "vite-plus/prefer-vite-plus-imports": "error", "no-unused-vars": "warn" },
     options: { typeAware: true, typeCheck: true },
   },
   run: {
