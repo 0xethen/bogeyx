@@ -484,7 +484,7 @@ const linkSchema = z.object({
 function LinkSound({ eventId, onAdded }: { eventId: string; onAdded: () => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const form = useAppForm({
-    ...appFormOptions.strictSchema({
+    ...appFormOptions.strictSchema(linkSchema, {
       defaultValues: { link: "", name: "" },
       errorVisibility,
       validators: [rewardEarlyPunishLate(linkSchema)],

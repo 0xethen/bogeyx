@@ -211,7 +211,7 @@ function ImportReadme({ eventId }: { eventId: string }) {
   const [found, setFound] = useState<{ repo: Repo; readme: string } | null>(null);
   const [done, setDone] = useState(false);
   const read = useAppForm({
-    ...appFormOptions.strictSchema({
+    ...appFormOptions.strictSchema(readmeSchema, {
       defaultValues: { address: "" },
       errorVisibility,
       validators: [rewardEarlyPunishLate(readmeSchema)],
@@ -229,7 +229,7 @@ function ImportReadme({ eventId }: { eventId: string }) {
     },
   });
   const fill = useAppForm({
-    ...appFormOptions.strictSchema({
+    ...appFormOptions.strictSchema(fillSchema, {
       defaultValues: { form: "0", into: "", link: "" },
       errorVisibility,
       validators: [rewardEarlyPunishLate(fillSchema)],
