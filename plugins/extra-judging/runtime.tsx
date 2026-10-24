@@ -12,13 +12,7 @@ import type { SettingsOf } from "@bogey/plugins/types";
 import { Badge } from "@bogey/ui/components/badge";
 import { Button } from "@bogey/ui/components/button";
 import { ErrorAlert } from "@bogey/ui/components/error-alert";
-import {
-  NumberField,
-  NumberFieldDecrement,
-  NumberFieldGroup,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from "@bogey/ui/components/number-field";
+import { NumberInput } from "@bogey/ui/components/number-field";
 import { Panel } from "@bogey/ui/components/panel";
 import { Screen } from "@bogey/ui/components/screen";
 import {
@@ -304,7 +298,7 @@ function BudgetEditor({
         </Badge>
       }
     >
-      <NumberField
+      <NumberInput
         value={points}
         min={0}
         max={budget}
@@ -312,13 +306,7 @@ function BudgetEditor({
         onValueChange={(value) => setPoints(value ?? 0)}
         aria-label={t("budget.points")}
         className="max-w-48"
-      >
-        <NumberFieldGroup>
-          <NumberFieldDecrement />
-          <NumberFieldInput />
-          <NumberFieldIncrement />
-        </NumberFieldGroup>
-      </NumberField>
+      />
       {left < 0 && <p className="text-sm text-destructive">{t("budget.over", { over: -left })}</p>}
       <ErrorAlert error={messageOf(save.error, t)} />
       <div>
