@@ -457,7 +457,7 @@ function ShareLink({ token, configKey }: { token: string; configKey: string }) {
           variant="outline"
           size="icon"
           aria-label="Download the file"
-          title="Download the file"
+          tooltip="Download the file"
           render={<a href={file} download="bogey.seb" />}
           nativeButton={false}
         >
@@ -495,7 +495,7 @@ function CopyInput({
         variant="outline"
         size="icon"
         aria-label={copied ? "Copied" : `Copy ${label}`}
-        title={copied ? "Copied" : "Copy"}
+        tooltip={copied ? "Copied" : "Copy"}
         onClick={() =>
           void navigator.clipboard.writeText(value).then(() => {
             setCopied(true);
@@ -667,7 +667,7 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
       variant="ghost"
       className="text-destructive"
       aria-label="Remove"
-      title="Remove"
+      tooltip="Remove"
       onClick={onClick}
     >
       <IconTrash />

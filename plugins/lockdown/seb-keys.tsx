@@ -63,7 +63,7 @@ export function SebKeys({ eventId }: { eventId: string }) {
                 variant="ghost"
                 className="text-destructive"
                 aria-label="Remove this key..."
-                title="Remove..."
+                tooltip="Remove..."
                 disabled={save.isPending}
                 confirm={{
                   title: "Remove this key?",

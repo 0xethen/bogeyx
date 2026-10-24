@@ -165,7 +165,7 @@ function PreviewButton({
       variant="ghost"
       disabled={!sound && !playing}
       aria-label={label}
-      title={label}
+      tooltip={label}
       onClick={() => {
         if (playing) engine.stopPreview();
         else if (sound) engine.preview(sound, channel, key);
@@ -447,7 +447,7 @@ function Library({
                   size="icon-xs"
                   variant="ghost"
                   aria-label={`Remove ${file.name}...`}
-                  title="Remove..."
+                  tooltip="Remove..."
                   confirm={{
                     title: `Remove "${file.name}"?`,
                     description:
