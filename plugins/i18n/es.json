@@ -2689,6 +2689,7 @@
   "manageJudging.voteHelp": "La gente vota por sus favoritos mientras la ventana de Voto popular está abierta (añádela en la Agenda). El proyecto más votado se propone como premio.",
   "manageJudging.voteCounts": "Recuento de votos",
   "manageJudging.perProject": "Jueces por proyecto",
+  "manageJudging.perProjectHelp": "Cuántos jueces puntúan cada proyecto.",
   "manageJudging.doneOf": "terminados de {total}",
   "manageJudging.noScores": "sin puntuaciones",
   "manageJudging.assigning": "Asignando",
