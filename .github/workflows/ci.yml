@@ -24,14 +24,14 @@ jobs:
       contents: write
     steps:
       # the same layout as a local checkout: plugins/ next to Bogey's monorepo/
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
         with:
           path: plugins
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
         with:
           repository: 0xethen/bogey
           path: monorepo
-      - uses: voidzero-dev/setup-vp@v1.21.2
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: "24"
           cache: true
@@ -62,14 +62,14 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
         with:
           path: plugins
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v7
         with:
           repository: 0xethen/bogey
           path: monorepo
-      - uses: voidzero-dev/setup-vp@v1.21.2
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: "24"
           cache: true
